@@ -5,9 +5,8 @@ package com.posada.santiago.gamapostsandcomments.application.bus;
 import com.google.gson.Gson;
 import com.posada.santiago.gamapostsandcomments.application.bus.models.CommentModel;
 import com.posada.santiago.gamapostsandcomments.application.bus.models.PostModel;
-import com.posada.santiago.gamapostsandcomments.application.handlers.QueueHandler;
+import com.posada.santiago.gamapostsandcomments.application.controller.SocketController;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 
@@ -15,21 +14,27 @@ import org.springframework.stereotype.Component;
 @Component
 public class RabbitMqConsumer {
 
+  private final Gson gson = new Gson();
+  private final SocketController controller;
+
   public static final String PROXY_QUEUE_POST_CREATED = "events.proxy.post.created";
   public static final String PROXY_QUEUE_COMMENT_ADDED = "events.proxy.comment.added";
 
-  @Autowired
-  private QueueHandler handler;
+  public RabbitMqConsumer(SocketController controller) {
+    this.controller = controller;
+  }
 
   @RabbitListener(queues = PROXY_QUEUE_POST_CREATED)
   public void listenToPostCreatedQueue(String postReceived){
     /**Starting point*/
-    handler.process(postReceived, PostModel.class);
+    PostModel post = gson.fromJson(postReceived, PostModel.class);
+    controller.sendModel("mainspace", post);
   }
 
   @RabbitListener(queues = PROXY_QUEUE_COMMENT_ADDED)
   public void listenToCommentAddedQueue(String commentReceived){
     /**Starting point*/
-    handler.process(commentReceived, CommentModel.class);
+    CommentModel comment = gson.fromJson(commentReceived, CommentModel.class);
+    controller.sendModel(comment.getPostId(), comment);
   }
 }
