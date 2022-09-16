@@ -1,8 +1,11 @@
 package com.posada.santiago.gamapostsandcomments.application.bus.models;
 
+import lombok.ToString;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@ToString
 public class PostModel {
   private String id;
   private String postID;

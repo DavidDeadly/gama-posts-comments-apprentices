@@ -2,7 +2,6 @@ package com.posada.santiago.gamapostsandcomments.application.controller;
 
 
 import com.google.gson.Gson;
-import com.posada.santiago.gamapostsandcomments.application.bus.models.PostModel;
 import org.springframework.stereotype.Component;
 
 import javax.websocket.OnClose;
@@ -11,6 +10,7 @@ import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -35,13 +35,14 @@ public class SocketController {
         Map<String, Session> sessionSpot = sessions.getOrDefault(correlationId, new HashMap<>());
         sessionSpot.put(session.getId(), session);
         sessions.put(correlationId, sessionSpot);
-        logger.info(String.format("Connected from %s", correlationId));
+        logger.info(String.format("%d Sessions Connected to { %s }", sessionSpot.size(), correlationId));
     }
 
     @OnClose
     public void onClose(Session session, @PathParam("correlationId") String correlationId) {
-        sessions.get(correlationId).remove(session.getId());
-        logger.info(String.format("Disconnected from %s", correlationId));
+        Map<String, Session> sessionSpot = sessions.get(correlationId);
+        sessionSpot.remove(session.getId());
+        logger.info(String.format("Disconnected from { %s }, %d remaining", correlationId, sessionSpot.size()));
     }
 
     @OnError
@@ -56,9 +57,11 @@ public class SocketController {
         if(Objects.isNull(correlationId)) return;
         if(!sessions.containsKey(correlationId)) return;
 
-        sessions.get(correlationId).values()
+        Collection<Session> sessionsOn = sessions.get(correlationId).values();
+
+        sessionsOn
             .forEach(session -> session.getAsyncRemote().sendText(msgModel));
 
-        logger.info(String.format("Sent from %s", correlationId));
+        logger.info(String.format("Sent from { %s } to %d Sessions", correlationId, sessionsOn.size()));
     }
 }

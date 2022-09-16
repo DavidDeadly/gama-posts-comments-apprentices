@@ -1,5 +1,8 @@
 package com.posada.santiago.gamapostsandcomments.application.bus.models;
 
+import lombok.ToString;
+
+@ToString
 public class CommentModel {
   private String id;
   private String postId;
